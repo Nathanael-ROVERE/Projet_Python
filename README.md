@@ -1,2 +1,5 @@
 # Projet_Python
-Créer des îles flottantes avec différentes atmosphères sur Maya
+
+Objectif : Créer des micros-environnements procéduraux avec différentes atmosphères sur Maya
+
+Pinterest : https://www.pinterest.fr/nathanalrovere/projet-python/

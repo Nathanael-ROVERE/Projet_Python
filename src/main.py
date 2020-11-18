@@ -6,4 +6,4 @@ sys.path.append(PATH)
 import ui
 reload(ui)
 
-window = ui.createWindow()  
+window = ui.UI('Diorama Generator')

@@ -1,49 +1,69 @@
-from maya import cmds 
+import maya.cmds as cmds
+from pymel.core import *
+import generator as gen
+
 
 class UI:
-  """Manage UI
-  """
-  def __init__(self, title):
-    """[summary]
-
-    Args:
-        id (string): window title
+    """Manage UI
     """
-    self.title = title.replace(" ", "")
-    self.resetUI()
-    self.createTemplate()
-    self.createWindow(title)
-    cmds.showWindow()
 
-  def resetUI(self):
-    """delete window and template if they are already instantiated
-    """
-    if cmds.window('window1', ex=True):
-        cmds.deleteUI('window1', window=True)
-    if cmds.uiTemplate(self.title + 'Template', exists=True):
-        cmds.deleteUI(self.title + 'Template', uiTemplate=True)
+    def __init__(self, title):
+        self.generator = gen.Generator()
 
-  def createWindow(self, title):
-    cmds.window(title=title, resizeToFitChildren=True, nestedDockingEnabled=True)
-    cmds.setUITemplate(self.title + 'Template', pushTemplate=True)
+        self.templateName = title.replace(" ", "") + 'Template'
 
-    # =========================================================
-    # BASE
-    # =========================================================
-    cmds.frameLayout(label='Base')
-    cmds.rowLayout(adj=True, nc=3)
-    self.dioramaShapeRadio = cmds.iconTextRadioCollection('DioramaShape')
-    cmds.iconTextRadioButton(st='iconAndTextVertical',
-                             i1='polyCylinder.png', l='Circular')
-    cmds.iconTextRadioButton(st='iconAndTextVertical', i1='polyCube.png', l='Squarish')
-    cmds.iconTextRadioButton(st='iconAndTextVertical', i1='polyPlatonic.png', l='Polygonal')
-    cmds.setParent('..')
-    cmds.setParent('..')
+        self.spacing = 10
+        self.resetUI()
+        self.createTemplate()
+        self.createWindow(title)
 
-  def createTemplate(self):
-    """Define default parameters for all UI elements
-    """
-    cmds.uiTemplate(self.title + 'Template')
-    cmds.frameLayout(dt=self.title + 'Template', cll=True, bgc=[0.2, 0.2, 0.2])
+    def resetUI(self):
+        """delete window and template if they are already instantiated
+        """
+        if cmds.window('window1', ex=True):
+            cmds.deleteUI('window1', window=True)
+        if cmds.uiTemplate(self.templateName, exists=True):
+            cmds.deleteUI(self.templateName, uiTemplate=True)
 
-  
+    def createTemplate(self):
+        """Define default parameters for all UI elements
+        """
+        self.template = uiTemplate(self.templateName, force=True)
+        # cmds.uiTemplate()
+
+        # cmds.columnLayout(defineTemplate=self.templateName,
+        #                   adjustableColumn=True,
+        #                   columnAttach=['both', self.spacing],
+        #                   rowSpacing=self.spacing)
+        # cmds.rowLayout(defineTemplate=self.templateName)
+        # cmds.frameLayout(defineTemplate=self.templateName,
+        #                  collapsable=True,
+        #                  backgroundColor=[0.2, 0.2, 0.2])
+
+    def createWindow(self, title):
+
+        # cmds.window(title=title)
+        cmds.setUITemplate(self.templateName, pushTemplate=True)
+        with window(menuBar=True, menuBarVisible=True) as self.win:
+            # start the template block
+            with self.template:
+                with columnLayout(adj=1):
+                    with rowLayout(nc=3):
+                        self.shapes = iconTextRadioCollection('shapes')
+                        iconTextRadioButton(l='Circular', i1='polyCylinder.png', st='iconAndTextVertical')
+                        iconTextRadioButton(l='Squarish', i1='polyCube.png', st='iconAndTextVertical')
+                        iconTextRadioButton(l='Polygonal', i1='polyPlatonic.png', st='iconAndTextVertical')
+                    
+        # cmds.columnLayout(adj=1)
+        # # =========================================================
+        # # BASE
+        # # =========================================================
+        # cmds.rowLayout(nc=3)
+        # self.dioramaShapeRadio = cmds.iconTextRadioCollection('DioramaShape')
+        # cmds.iconTextRadioButton(st='iconAndTextVertical',
+        #                          i1='polyCylinder.png', l='Circular')
+        # cmds.iconTextRadioButton(st='iconAndTextVertical',
+        #                          i1='polyCube.png', l='Squarish')
+        # cmds.iconTextRadioButton(st='iconAndTextVertical',
+        #                          i1='polyPlatonic.png', l='Polygonal')
+        # cmds.setParent('..')

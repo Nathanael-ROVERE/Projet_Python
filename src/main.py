@@ -3,7 +3,8 @@ from pymel.core import *
 import maya.cmds as cmds
 import sys
 # Change the path to your directory
-PATH = "C:\Users\macou\ATI\python\Projet_Python\src"
+# PATH = "C:\Users\macou\ATI\python\Projet_Python\src"
+PATH = "C:\Users\nrovere\Documents\SEMESTRE1\Python>\Projet_Python\src"
 sys.path.append(PATH)
 
 

@@ -1,6 +1,6 @@
 import maya.cmds as cmds
 from pymel.core import *
-import generator as gen
+# import generator as gen
 
 
 class UI:
@@ -48,12 +48,16 @@ class UI:
             # start the template block
             with self.template:
                 with columnLayout(adj=1):
-                    with rowLayout(nc=3):
+                    with formLayout() as form:
                         self.shapes = iconTextRadioCollection('shapes')
-                        iconTextRadioButton(l='Circular', i1='polyCylinder.png', st='iconAndTextVertical')
-                        iconTextRadioButton(l='Squarish', i1='polyCube.png', st='iconAndTextVertical')
-                        iconTextRadioButton(l='Polygonal', i1='polyPlatonic.png', st='iconAndTextVertical')
-                    
+                        rb1 = iconTextRadioButton(l='Circular', i1='polyCylinder.png', st='iconAndTextVertical')
+                        rb2 = iconTextRadioButton(l='Squarish', i1='polyCube.png', st='iconAndTextVertical')
+                        rb3 = iconTextRadioButton(l='Polygonal', i1='polyPlatonic.png', st='iconAndTextVertical')
+                        formLayout(form, edit=True, attachPosition=[
+                            (rb1, 'left', 0, 0),
+                            (rb2, 'left', 0, 33),
+                            (rb3, 'left', 0, 66)
+                        ])
         # cmds.columnLayout(adj=1)
         # # =========================================================
         # # BASE

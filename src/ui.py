@@ -1,17 +1,20 @@
 import maya.cmds as cmds
 from pymel.core import *
-# import generator as gen
+import generator as gen
+import utils
+reload(gen)
+reload(utils)
 
 
 class UI:
     """Manage UI
     """
-
     def __init__(self, title):
+
         self.generator = gen.Generator()
 
         self.templateName = title.replace(" ", "") + 'Template'
-
+    
         self.spacing = 10
         self.resetUI()
         self.createTemplate()
@@ -29,45 +32,64 @@ class UI:
         """Define default parameters for all UI elements
         """
         self.template = uiTemplate(self.templateName, force=True)
-        # cmds.uiTemplate()
-
-        # cmds.columnLayout(defineTemplate=self.templateName,
-        #                   adjustableColumn=True,
-        #                   columnAttach=['both', self.spacing],
-        #                   rowSpacing=self.spacing)
-        # cmds.rowLayout(defineTemplate=self.templateName)
-        # cmds.frameLayout(defineTemplate=self.templateName,
-        #                  collapsable=True,
-        #                  backgroundColor=[0.2, 0.2, 0.2])
-
+        self.template.define(iconTextRadioButton, mw=self.spacing, mh=self.spacing)
+        self.template.define(frameLayout, collapsable=True,
+                             backgroundColor=[0.2, 0.2, 0.2])
+        self.template.define(intSliderGrp, cal=[1, "left"])
     def createWindow(self, title):
-
-        # cmds.window(title=title)
-        cmds.setUITemplate(self.templateName, pushTemplate=True)
-        with window(menuBar=True, menuBarVisible=True) as self.win:
-            # start the template block
+        with window(title=title) as self.win:
             with self.template:
-                with columnLayout(adj=1):
-                    with formLayout() as form:
-                        self.shapes = iconTextRadioCollection('shapes')
-                        rb1 = iconTextRadioButton(l='Circular', i1='polyCylinder.png', st='iconAndTextVertical')
-                        rb2 = iconTextRadioButton(l='Squarish', i1='polyCube.png', st='iconAndTextVertical')
-                        rb3 = iconTextRadioButton(l='Polygonal', i1='polyPlatonic.png', st='iconAndTextVertical')
-                        formLayout(form, edit=True, attachPosition=[
-                            (rb1, 'left', 0, 0),
-                            (rb2, 'left', 0, 33),
-                            (rb3, 'left', 0, 66)
-                        ])
-        # cmds.columnLayout(adj=1)
-        # # =========================================================
-        # # BASE
-        # # =========================================================
-        # cmds.rowLayout(nc=3)
-        # self.dioramaShapeRadio = cmds.iconTextRadioCollection('DioramaShape')
-        # cmds.iconTextRadioButton(st='iconAndTextVertical',
-        #                          i1='polyCylinder.png', l='Circular')
-        # cmds.iconTextRadioButton(st='iconAndTextVertical',
-        #                          i1='polyCube.png', l='Squarish')
-        # cmds.iconTextRadioButton(st='iconAndTextVertical',
-        #                          i1='polyPlatonic.png', l='Polygonal')
-        # cmds.setParent('..')
+                with rowColumnLayout(nc=1, co=(1, "both", 15), adj=1):
+                    with frameLayout("Environment"):
+                        self.environment = {}
+                        with rowLayout(nc=4):
+                            text(l='Time', al="left")
+                            self.environment['time'] = iconTextRadioCollection(
+                                'time')
+                            iconTextRadioButton('day', sl=(False, True)[self.environment['time'] == "day"],
+                                                l='Circular', i1=utils.icon_path() + 't_sun.png', st='iconOnly')
+                            iconTextRadioButton('night',
+                                                sl=(False, True)[
+                                                    self.generator.environment['time'] == "night"],
+                                                l='Squarish', i1=utils.icon_path() + 't_moon.png', st='iconOnly')
+                        with rowLayout(nc=5):
+                            text(l='Season', al='left')
+                            self.environment['season'] = iconTextRadioCollection('season')
+                            iconTextRadioButton('spring', sl=(False, True)
+                                                [self.environment['season'] == "spring"],
+                                                l='Spring', i1=utils.icon_path() + 'e_spring.png', st='iconOnly')
+                            iconTextRadioButton('summer', sl=(False, True)
+                                                [self.environment['season']
+                                                    == "summer"],
+                                                l='Spring', i1=utils.icon_path() + 'e_summer.png', st='iconOnly')
+                            iconTextRadioButton('automn', sl=(False, True)
+                                                [self.environment['season']
+                                                    == "automn"],
+                                                l='Spring', i1=utils.icon_path() + 'e_automn.png', st='iconOnly')
+                            iconTextRadioButton('winter', sl=(False, True)
+                                                [self.environment['season']
+                                                    == "winter"],
+                                                l='Spring', i1=utils.icon_path() + 'e_winter.png', st='iconOnly')
+
+                    with frameLayout("Base"):
+                        self.base = {}
+                        with rowLayout(nc=3):
+                            self.base['shape'] = iconTextRadioCollection(
+                                'shapes')
+                            iconTextRadioButton('circular',
+                                                sl=(False, True)[
+                                                    self.generator.base['shape'] == "circular"],
+                                                l='Circular', i1='polyCylinder.png', st='iconAndTextVertical')
+                            iconTextRadioButton('squarish',
+                                                sl=(False, True)[
+                                                    self.generator.base['shape'] == "squarish"],
+                                                l='Squarish', i1='polyCube.png', st='iconAndTextVertical')
+                            iconTextRadioButton('polygonal',
+                                                sl=(False, True)[
+                                                    self.generator.base['shape'] == "polygonal"],
+                                                l='Polygonal', i1='polyPlatonic.png', st='iconAndTextVertical')
+                        self.base['size'] = intSliderGrp(
+                            f=True, l='Size', cw3=[40,50, 90])
+                    separator(h=10, style='none')
+                    button(label="Generate", c=Callback( self.generator.generate, self))
+

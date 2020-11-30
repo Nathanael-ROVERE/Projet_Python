@@ -8,6 +8,11 @@ class Generator:
         self.environment['time'] = 'day'
         self.base = {}
         self.base['shape'] = "circular"
+        self.elements = {}
+        self.camera = {}
+        self.camera['enabled'] = True
+        self.camera['focal'] = "50mm"
+
 
     def generate(self, UI):
         self.updateValues(UI)

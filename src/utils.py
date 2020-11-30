@@ -1,7 +1,4 @@
 import os
-os.path.dirname(os.path.abspath(__file__))
-
-print(os.path.dirname)
 
 def icon_path():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '\\icons\\'

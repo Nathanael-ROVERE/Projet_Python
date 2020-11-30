@@ -1,7 +1,3 @@
-import functools as func
-from pymel.core import *
-import maya.cmds as cmds
-import sys
 import ui
 reload(ui)
 
@@ -21,4 +17,3 @@ cmds.file(f=True, new=True)
 # cmds.file(MODEL_PATH + "\\COULEURS_OBJETS.mb", reference=True, namespace="objects")
 # after = set(cmds.ls(type='transform'))
 # imported = after - before
-# cmds.hide(imported)

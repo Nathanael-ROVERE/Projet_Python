@@ -2,6 +2,7 @@ import maya.cmds as cmds
 from pymel.core import *
 import generator as gen
 import utils
+from os import path
 reload(gen)
 reload(utils)
 
@@ -9,12 +10,13 @@ reload(utils)
 class UI:
     """Manage UI
     """
+
     def __init__(self, title):
 
         self.generator = gen.Generator()
 
         self.templateName = title.replace(" ", "") + 'Template'
-    
+
         self.spacing = 10
         self.widthLabel = 50
         self.resetUI()
@@ -37,16 +39,17 @@ class UI:
         #Layouts
         self.template.define(frameLayout, collapsable=True,
                              backgroundColor=[0.2, 0.2, 0.2])
-        self.template.define(rowColumnLayout, nc=1, co=(1, "both", self.spacing), adj=1)
+        self.template.define(rowColumnLayout, nc=1, co=(
+            1, "both", self.spacing), adj=1)
 
         #elements
-        self.template.define(iconTextRadioButton, mw=self.spacing, mh=self.spacing)
+        self.template.define(iconTextRadioButton,
+                             mw=self.spacing, mh=self.spacing)
         self.template.define(intSliderGrp, cal=[1, "left"])
 
         #style
         self.template.define(separator, h=self.spacing, style="none")
-    
-    
+
     @staticmethod
     def toggle(controls):
         for control in controls.values():
@@ -98,7 +101,7 @@ class UI:
                                         [self.environment['season']
                                             == "winter"],
                                         l='Spring', i1=utils.icon_path() + 'e_winter.png', st='iconOnly')
-    
+
     def frameBase(self):
         self.base = {}
         with frameLayout("Base"):
@@ -125,12 +128,6 @@ class UI:
                     f=True, l='Size', cw3=[self.widthLabel, 50, 90])
                 separator()
 
-    def frameElements(self):
-        self.elements = {}
-        with frameLayout("Elements"):
-            with rowColumnLayout():
-                text(l='elements')
-
     def frameCamera(self):
         self.camera = {}
         with frameLayout("Camera"):
@@ -142,12 +139,29 @@ class UI:
                                                                 self.toggle, self.camera),
                                                             ofc=Callback(self.toggle, self.camera))
                     self.camera['focal'] = radioButtonGrp(l="Focal", nrb=4, cw=[1, 50],
-                                   labelArray4=['28mm', '50mm', '120mm', '200mm'], 
-                                   cal=[1, "left" ],
-                                   cw5=[self.widthLabel, 60, 60, 60, 60])
+                                                          labelArray4=[
+                                                              '28mm', '50mm', '120mm', '200mm'],
+                                                          cal=[1, "left"],
+                                                          cw5=[self.widthLabel, 60, 60, 60, 60])
                     print(self.camera['focal'].type())
-    
-    
+
+    def createItemsList(self):
+        iconPath = utils.icon_path() + "\\types\\"
+        filesList = getFileList(fld=utils.model_path(), fs="*.mb")
+
+        for file in filesList:
+            namespace = file.replace(".mb", "")
+            icon = iconPath + namespace + ".png"
+            before = set(cmds.ls(type='transform'))
+            print(icon)
+            cmds.file(utils.model_path() + file,
+                      reference=True, namespace=namespace)
+            after = set(cmds.ls(type='transform'))
+            imported = after - before
+            for obj in imported:
+                treeLister(self.treeLister, e=True, add=(
+                    namespace + "/" + obj.replace(namespace + ":", ""), icon, "cmds.polySphere()"))
+
     def createWindow(self, title):
         with window(title=title) as self.win:
             with self.template:
@@ -156,11 +170,16 @@ class UI:
                         separator()
                         self.frameEnvironment()
                         self.frameBase()
-                        self.frameElements()
                         self.frameCamera()
                         separator()
-                        button(label="Generate", c=Callback( self.generator.generate, self))
+                        button(label="Generate", c=Callback(
+                            self.generator.generate, self))
                         separator()
                     with rowColumnLayout():
-                        text(l='test')
-
+                        separator()
+                        # with rowLayout(nc=2, cl2=["left", "left"]):
+                            # text('search')
+                            # text('icon size')
+                        self.treeLister = treeLister(h=400)
+                        self.createItemsList()
+                        separator()

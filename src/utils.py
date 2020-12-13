@@ -2,6 +2,8 @@ import os
 
 def icon_path():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '\\icons\\'
+def model_path():
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '\\models\\'
 
 
 def frange(x, y, jump=1.0):

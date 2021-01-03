@@ -2,6 +2,7 @@ import maya.cmds as cmds
 from pymel.core import *
 import generator as gen
 import utils
+import functools as func
 from os import path
 reload(gen)
 reload(utils)
@@ -19,6 +20,9 @@ class UI:
 
         self.spacing = 10
         self.widthLabel = 50
+
+        self.selectedItems = []
+
         self.resetUI()
         self.createTemplate()
         self.createWindow(title)
@@ -26,7 +30,7 @@ class UI:
     def resetUI(self):
         """delete window and template if they are already instantiated
         """
-        if cmds.window('window1', ex=True):
+        if cmds.window('window1', rtf=True, ex=True):
             cmds.deleteUI('window1', window=True)
         if cmds.uiTemplate(self.templateName, exists=True):
             cmds.deleteUI(self.templateName, uiTemplate=True)
@@ -37,7 +41,7 @@ class UI:
         self.template = uiTemplate(self.templateName, force=True)
 
         #Layouts
-        self.template.define(frameLayout, collapsable=True,
+        self.template.define(frameLayout, collapsable=False,
                              backgroundColor=[0.2, 0.2, 0.2])
         self.template.define(rowColumnLayout, nc=1, co=(
             1, "both", self.spacing), adj=1)
@@ -53,19 +57,18 @@ class UI:
     @staticmethod
     def toggle(controls):
         for control in controls.values():
-            control.type()
             isFloatGroup = cmds.floatSliderGrp(control, q=True, ex=True)
             isIntGroup = cmds.intSliderGrp(control, q=True, ex=True)
-            isRadioButtonGrp = cmds.radioButtonGrp(control, q=True, ex=True)
+            isOptionMenuGroup = cmds.optionMenuGrp(control, q=True, ex=True)
             if (isFloatGroup):
                 value = cmds.floatSliderGrp(control, q=True, en=True)
                 cmds.floatSliderGrp(control, e=True, en=not value)
             elif (isIntGroup):
                 value = cmds.intSliderGrp(control, q=True, en=True)
                 cmds.intSliderGrp(control, e=True, en=not value)
-            elif(isRadioButtonGrp):
-                value = cmds.radioButtonGrp(control, q=True, en=True)
-                cmds.radioButtonGrp(control, e=True, en=not value)
+            elif(isOptionMenuGroup):
+                value = cmds.optionMenuGrp(control, q=True, en=True)
+                cmds.optionMenuGrp(control, e=True, en=not value)
 
     def frameEnvironment(self):
         self.environment = {}
@@ -138,12 +141,31 @@ class UI:
                                                             onc=Callback(
                                                                 self.toggle, self.camera),
                                                             ofc=Callback(self.toggle, self.camera))
-                    self.camera['focal'] = radioButtonGrp(l="Focal", nrb=4, cw=[1, 50],
-                                                          labelArray4=[
-                                                              '28mm', '50mm', '120mm', '200mm'],
-                                                          cal=[1, "left"],
-                                                          cw5=[self.widthLabel, 60, 60, 60, 60])
-                    print(self.camera['focal'].type())
+                    # self.camera['focal'] = radioButtonGrp(l="Focal", nrb=4, cw=[1, 50],
+                    #                                       labelArray4=[
+                    #                                           '28mm', '50mm', '120mm', '200mm'],
+                    #                                       cal=[1, "left"],
+                    #                                       cw5=[self.widthLabel, 60, 60, 60, 60])
+                    # print(self.camera['focal'].type())
+                    self.camera['focal'] = cmds.optionMenuGrp(
+                        label='Focal', extraLabel='mm', cal=[1, 'left'],
+                        cw3=[self.widthLabel, 50, 90])
+
+                    cmds.menuItem(label='28')
+                    cmds.menuItem(label='50')
+                    cmds.menuItem(label='120')
+                    cmds.menuItem(label='200')
+
+    def addToSelectedItems(self, item, namespace):
+        if treeView(self.treeView, q=True, iex=namespace) == 0:
+            treeView(self.treeView, e=True, addItem=(namespace, ""))
+
+        _item = (item, namespace)
+        treeView(self.treeView, e=True, addItem=_item)
+        treeView(self.treeView, e=True, bti=[item, 1, "-"])
+
+    def removeFromSelectedItems(self, *args):
+        treeView(self.treeView, e=True, ri=args[0])
 
     def createItemsList(self):
         iconPath = utils.icon_path() + "\\types\\"
@@ -153,19 +175,19 @@ class UI:
             namespace = file.replace(".mb", "")
             icon = iconPath + namespace + ".png"
             before = set(cmds.ls(type='transform'))
-            print(icon)
             cmds.file(utils.model_path() + file,
                       reference=True, namespace=namespace)
             after = set(cmds.ls(type='transform'))
             imported = after - before
-            for obj in imported:
+            for obj in sorted(imported):
+                item = obj.replace(namespace + ":", "").replace("_", "/", 1)
                 treeLister(self.treeLister, e=True, add=(
-                    namespace + "/" + obj.replace(namespace + ":", ""), icon, "cmds.polySphere()"))
+                    namespace + "/" + item, icon, func.partial(self.addToSelectedItems, item, namespace)))
 
     def createWindow(self, title):
         with window(title=title) as self.win:
             with self.template:
-                with paneLayout(cn="vertical2"):
+                with paneLayout(cn="vertical3"):
                     with rowColumnLayout():
                         separator()
                         self.frameEnvironment()
@@ -177,9 +199,29 @@ class UI:
                         separator()
                     with rowColumnLayout():
                         separator()
-                        # with rowLayout(nc=2, cl2=["left", "left"]):
-                            # text('search')
-                            # text('icon size')
-                        self.treeLister = treeLister(h=400)
-                        self.createItemsList()
+                        with frameLayout("Available Objects"):
+                            self.treeLister = treeLister(w=200, h=400)
+                            self.createItemsList()
+                            separator()
+                    with rowColumnLayout():
                         separator()
+                        with frameLayout("Selected Objects"):
+                            separator()
+                            self.treeView = treeView(
+                                nb=1,
+                                ahp=True,
+                                ams=False,
+                                adr=False,
+                                arp=False,
+                                abr=True,
+                                w=200,
+                                h=350,
+                                pressCommand=[(1, func.partial(self.removeFromSelectedItems))])
+
+                            filesList = getFileList(
+                                fld=utils.model_path(), fs="*.mb")
+                            for file in filesList:
+                                namespace = file.replace(".mb", "")
+                                treeView(self.treeView, e=True,
+                                         addItem=(namespace, ""), hb=True)
+                            separator()

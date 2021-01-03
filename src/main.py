@@ -11,6 +11,8 @@ sys.path.append(PATH + "\\src")
 import ui
 reload(ui)
 
+cmds.file(f=True, new=True)
+
 window = ui.UI('Generator')
 
 # before = set(cmds.ls(type='transform'))

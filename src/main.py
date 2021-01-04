@@ -13,4 +13,4 @@ reload(ui)
 
 cmds.file(f=True, new=True)
 
-window = ui.UI('Generator')
+window = ui.UI('Diorama Generator v0.2.1')

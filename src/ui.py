@@ -50,6 +50,7 @@ class UI:
         self.template.define(iconTextRadioButton,
                              mw=self.spacing, mh=self.spacing)
         self.template.define(intSliderGrp, cal=[1, "left"])
+        self.template.define(iconTextRadioButton, hlc=[0.2, 0.2, 0.2], mw=5, mh=5)
 
         #style
         self.template.define(separator, h=self.spacing, style="none")
@@ -78,7 +79,8 @@ class UI:
                     text(l='Time', al="left")
                     self.environment['time'] = iconTextRadioCollection(
                         'time')
-                    iconTextRadioButton('day', sl=(False, True)[self.environment['time'] == "day"],
+                    iconTextRadioButton('day', sl=(False, True)[
+                                            self.generator.environment['time'] == "day"],
                                         l='Circular', i1=utils.icon_path() + 't_sun.png', st='iconOnly')
                     iconTextRadioButton('night',
                                         sl=(False, True)[
@@ -89,19 +91,19 @@ class UI:
                     self.environment['season'] = iconTextRadioCollection(
                         'season')
                     iconTextRadioButton('spring', sl=(False, True)
-                                        [self.environment['season']
+                                        [self.generator.environment['season']
                                             == "spring"],
                                         l='Spring', i1=utils.icon_path() + 'e_spring.png', st='iconOnly')
                     iconTextRadioButton('summer', sl=(False, True)
-                                        [self.environment['season']
+                                        [self.generator.environment['season']
                                             == "summer"],
                                         l='Spring', i1=utils.icon_path() + 'e_summer.png', st='iconOnly')
                     iconTextRadioButton('automn', sl=(False, True)
-                                        [self.environment['season']
+                                        [self.generator.environment['season']
                                             == "automn"],
                                         l='Spring', i1=utils.icon_path() + 'e_automn.png', st='iconOnly')
                     iconTextRadioButton('winter', sl=(False, True)
-                                        [self.environment['season']
+                                        [self.generator.environment['season']
                                             == "winter"],
                                         l='Spring', i1=utils.icon_path() + 'e_winter.png', st='iconOnly')
 
@@ -117,18 +119,26 @@ class UI:
                     iconTextRadioButton('circular',
                                         sl=(False, True)[
                                             self.generator.base['shape'] == "circular"],
-                                        l='Circular', i1='polyCylinder.png', st='iconAndTextVertical')
+                                        l='Smooth', i1='polyCylinder.png', st='iconAndTextVertical')
                     iconTextRadioButton('squarish',
                                         sl=(False, True)[
                                             self.generator.base['shape'] == "squarish"],
-                                        l='Squarish', i1='polyCube.png', st='iconAndTextVertical')
+                                        l='Cubic', i1='polyCube.png', st='iconAndTextVertical')
                     iconTextRadioButton('polygonal',
                                         sl=(False, True)[
                                             self.generator.base['shape'] == "polygonal"],
-                                        l='Polygonal', i1='polyPlatonic.png', st='iconAndTextVertical')
+                                        l='Triangle', i1='polyPlatonic.png', st='iconAndTextVertical')
                 separator()
                 self.base['size'] = intSliderGrp(
+                    v=self.generator.base['size'],
+                    minValue=5,
+                    maxValue=50,
                     f=True, l='Size', cw3=[self.widthLabel, 50, 90])
+                self.base['height'] = intSliderGrp(
+                    v=self.generator.base['height'],
+                    minValue=1,
+                    maxValue=10,
+                    f=True, l='Height', cw3=[self.widthLabel, 50, 90])
                 separator()
 
     def frameCamera(self):
@@ -136,17 +146,17 @@ class UI:
         with frameLayout("Camera"):
             with rowColumnLayout():
                 with columnLayout(cat=['both', 0], rs=self.spacing, adj=1):
-                    self.camera['enabled'] = symbolCheckBox(image='out_camera.png',
-                                                            v=self.generator.camera['enabled'],
-                                                            onc=Callback(
-                                                                self.toggle, self.camera),
-                                                            ofc=Callback(self.toggle, self.camera))
-                    # self.camera['focal'] = radioButtonGrp(l="Focal", nrb=4, cw=[1, 50],
-                    #                                       labelArray4=[
-                    #                                           '28mm', '50mm', '120mm', '200mm'],
-                    #                                       cal=[1, "left"],
-                    #                                       cw5=[self.widthLabel, 60, 60, 60, 60])
-                    # print(self.camera['focal'].type())
+                    # self.camera['enabled'] = cmds.checkBoxGrp(numberOfCheckBoxes=1, 
+                    #                                             label='Enable',
+                    #                                             label1='Camera',
+                    #                                             v1=self.generator.camera['enabled'],
+                    #                                           cal=[1, 'left'],
+                    #                                           cw3=[
+                    #                                               self.widthLabel, 10, 90],
+                    #                                             onc=Callback(
+                    #                                                 self.toggle, self.camera),
+                    #                                             ofc=Callback(
+                    #                                                 self.toggle, self.camera))
                     self.camera['focal'] = cmds.optionMenuGrp(
                         label='Focal', extraLabel='mm', cal=[1, 'left'],
                         cw3=[self.widthLabel, 50, 90])
@@ -163,6 +173,8 @@ class UI:
         _item = (item, namespace)
         treeView(self.treeView, e=True, addItem=_item)
         treeView(self.treeView, e=True, bti=[item, 1, "-"])
+        treeView(self.treeView, e=True,
+                 displayLabel=[item, item.replace(namespace + ':', '')])
 
     def removeFromSelectedItems(self, *args):
         treeView(self.treeView, e=True, ri=args[0])
@@ -180,12 +192,13 @@ class UI:
             after = set(cmds.ls(type='transform'))
             imported = after - before
             for obj in sorted(imported):
+                cmds.hide(obj)
                 item = obj.replace(namespace + ":", "").replace("_", "/", 1)
                 treeLister(self.treeLister, e=True, add=(
-                    namespace + "/" + item, icon, func.partial(self.addToSelectedItems, item, namespace)))
+                    namespace + "/" + item, icon, func.partial(self.addToSelectedItems, obj, namespace)))
 
     def createWindow(self, title):
-        with window(title=title) as self.win:
+        with window(title=title, w=800, nde=True) as self.win:
             with self.template:
                 with paneLayout(cn="vertical3"):
                     with rowColumnLayout():
@@ -197,10 +210,14 @@ class UI:
                         button(label="Generate", c=Callback(
                             self.generator.generate, self))
                         separator()
+                        button(label='Regenerate', c=Callback(
+                            self.generator.regenerate, self
+                        ))
+                        separator()
                     with rowColumnLayout():
                         separator()
                         with frameLayout("Available Objects"):
-                            self.treeLister = treeLister(w=200, h=400)
+                            self.treeLister = treeLister(w=200, h=360)
                             self.createItemsList()
                             separator()
                     with rowColumnLayout():
@@ -215,7 +232,7 @@ class UI:
                                 arp=False,
                                 abr=True,
                                 w=200,
-                                h=350,
+                                h=330,
                                 pressCommand=[(1, func.partial(self.removeFromSelectedItems))])
 
                             filesList = getFileList(

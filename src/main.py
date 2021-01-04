@@ -14,7 +14,3 @@ reload(ui)
 cmds.file(f=True, new=True)
 
 window = ui.UI('Generator')
-
-# before = set(cmds.ls(type='transform'))
-# after = set(cmds.ls(type='transform'))
-# imported = after - before
